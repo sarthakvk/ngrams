@@ -1,50 +1,45 @@
-# BNC Character N-Gram Frequencies
+# N-Gram Frequencies for Typing Practice
 
-This directory contains frequency-sorted character n-grams derived from Adam
-Kilgarriff's complete BNC World frequency list:
+A frequency-ranked dataset of English character bigrams, trigrams, and
+tetragrams for typing practice. The lists can be used with typing tools such
+as [Monkeytype](https://monkeytype.com/) or with custom typing trainers.
+All alphabetic characters in the dataset are lowercase.
 
-<https://www.kilgarriff.co.uk/BNClists/all.num.gz>
+## Dataset
 
-The generated files are:
+| N-gram | Full frequency data | Top 100 | Top 200 |
+| --- | ---: | ---: | ---: |
+| Bigrams | [`bigrams.txt`](bigrams.txt) (2,386) | [`bigrams-top-100.txt`](bigrams-top-100.txt) | [`bigrams-top-200.txt`](bigrams-top-200.txt) |
+| Trigrams | [`trigrams.txt`](trigrams.txt) (44,979) | [`trigrams-top-100.txt`](trigrams-top-100.txt) | [`trigrams-top-200.txt`](trigrams-top-200.txt) |
+| Tetragrams | [`tetragrams.txt`](tetragrams.txt) (238,090) | [`tetragrams-top-100.txt`](tetragrams-top-100.txt) | [`tetragrams-top-200.txt`](tetragrams-top-200.txt) |
 
-- `bigrams.txt`: 2,386 unique bigrams
-- `trigrams.txt`: 44,979 unique trigrams
-- `tetragrams.txt`: 238,090 unique tetragrams
-
-Each output line is tab-separated:
-
-```text
-ngram<TAB>frequency
-```
-
-## Source Format
-
-Each source row has four whitespace-separated fields:
+The top-100 and top-200 files contain a single space-separated line of n-grams,
+ordered from most to least frequent:
 
 ```text
-frequency word POS file_count
+th he in er an re on en at nd ...
 ```
 
-For example:
+The full files contain every unique n-gram and its frequency as tab-separated
+values:
 
 ```text
-239460 there ex0 3993
-88490 there av0 3684
+th	12641350
+he	11282123
+in	8851244
 ```
 
-The `!!WHOLE_CORPUS` row is excluded because it is corpus metadata rather than
-a word.
+## Source
 
-## Extraction Logic
+The dataset is derived from Adam Kilgarriff's complete
+[BNC World frequency list](https://www.kilgarriff.co.uk/BNClists/all.num.gz),
+which lists words from the British National Corpus by frequency.
 
-For every source row and each n-gram length `n` in `2`, `3`, and `4`, every
-overlapping substring is extracted and credited with that row's frequency:
+## Generation
 
-```python
-for index in range(len(word) - n + 1):
-    ngram = word[index:index + n]
-    counts[n][ngram] += frequency
-```
+For every word in the source data, each overlapping character sequence of
+length 2, 3, and 4 is extracted. The word's frequency is then added to the
+frequency of each sequence.
 
 For example, `there` produces:
 
@@ -54,53 +49,9 @@ Trigrams:   the her ere
 Tetragrams: ther here
 ```
 
-If `there` has frequency 10,000, each listed n-gram receives `+10,000`.
+If `there` has a frequency of 10,000, each sequence receives 10,000. Repeated
+sequences are counted at every position, and entries for the same word are
+combined across parts of speech.
 
-Repeated n-grams within a word are counted once per occurrence. For example,
-`letter` contains `te` twice, so the word's frequency is added to `te` twice.
-
-Words represented by multiple POS rows contribute every row's frequency. The
-two `there` rows shown above therefore contribute a combined 327,950 to each
-n-gram occurrence in `there`.
-
-## Token Handling
-
-Source tokens are preserved exactly:
-
-- No stemming or lemmatization is performed.
-- No letters-only filter is applied.
-- No additional lowercasing is performed.
-- Apostrophes, punctuation, and digits are retained.
-- Underscores in BNC multiword entries such as `out_of` are retained.
-
-The complete raw BNC list includes names, numbers, punctuation, and CLAWS
-multiword tokens. A letters-only or lemmatized source would produce different
-results.
-
-## Sorting
-
-Each file is sorted by frequency descending. N-grams with equal frequencies
-are sorted lexicographically ascending for deterministic output:
-
-```python
-sorted(counts.items(), key=lambda item: (-item[1], item[0]))
-```
-
-## Validation
-
-The generated files were independently checked to ensure:
-
-- Every n-gram has the expected length.
-- No n-gram appears more than once in a file.
-- Every frequency is positive.
-- Frequencies are sorted descending, with lexicographic tie-breaking.
-- Summed output frequencies equal the source-derived total of `frequency *
-  number_of_overlapping_positions`.
-
-Validated weighted totals:
-
-```text
-Bigrams:     370,420,373
-Trigrams:    273,779,389
-Tetragrams:  194,732,499
-```
+The full files are sorted by frequency in descending order. N-grams with the
+same frequency are sorted lexicographically.
