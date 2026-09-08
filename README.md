@@ -41,6 +41,12 @@ For every word in the source data, each overlapping character sequence of
 length 2, 3, and 4 is extracted. The word's frequency is then added to the
 frequency of each sequence.
 
+```python
+for index in range(len(word) - n + 1):
+    ngram = word[index:index + n]
+    counts[n][ngram] += frequency
+```
+
 For example, `there` produces:
 
 ```text
